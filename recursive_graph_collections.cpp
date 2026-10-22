@@ -148,9 +148,10 @@ bool rgc_new_graph(CollectionId id, const char *name, int n) {
         nodes.insert(nodeNumber);
     }
 
-    collection->get().insert({ name, graph });
-
-    return true;
+    // Try to insert the graph while simultaneously checking if another one
+    // with the same name exists.
+    auto [it, wasInserted] = collection->get().insert({ name, graph });
+    return wasInserted;
 }
 
 void rgc_delete_graph(CollectionId id, const char *name) {
