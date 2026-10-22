@@ -1,4 +1,6 @@
+#include <limits.h>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -12,10 +14,16 @@
 
 using std::ignore;  // For ignoring unused function params (temporary)
 using std::map;
+using std::nullopt;
 using std::pair;
+using std::optional;
+using std::reference_wrapper;
 using std::set;
 using std::string;
 using std::unordered_map;
+
+template<typename T>
+using OptionalReference = optional<reference_wrapper<T>>;
 
 using Vertex = int;
 using Edge = pair<Vertex, Vertex>;
@@ -30,35 +38,122 @@ using CollectionMap = unordered_map<CollectionId, Collection>;
 namespace cxx {
 #endif
 
-CollectionId rgc_new_collection() {
+// Namespace for helper functions and global variables.
+namespace {
+
+long lastCollectionId = -1;
+CollectionMap collectionMap;
+
+bool verifyName(string name) {
     // TODO
+}
+
+OptionalReference<Collection> findCollection(CollectionId id) {
+    CollectionMap::iterator it = collectionMap.find(id);
+    if (it == collectionMap.end()) {
+        return nullopt;
+    }
+    return it->second;
+}
+
+OptionalReference<Graph> findGraph(CollectionId id, GraphName name) {
+    OptionalReference<Collection> collection = findCollection(id);
+    if (!collection) {
+        return nullopt;
+    }
+
+    Collection::iterator it = collection->get().find(name);
+    if (it == collection->get().end()) {
+        return nullopt;
+    }
+    return it->second;
+}
+
+Vertex smallestFreeNodeNumber(Graph& graph) {
+    auto& [nodes, edges] = graph;
+
+    // TODO: Temporary solution
+    for (int nodeNumber = 0; nodeNumber <= INT_MAX; nodeNumber++) {
+        if (nodes.find(nodeNumber) != nodes.end()) {
+            return nodeNumber;
+        }
+    }
+
     return -1;
+}
+
+} // namespace
+
+CollectionId rgc_new_collection() {
+    if (lastCollectionId == LONG_MAX) {
+        return -1;      // Return -1 if no more ids left.
+    }
+
+    int collectionId = ++lastCollectionId;
+    collectionMap.insert({ collectionId, Collection() });
+
+    return collectionId;
 }
 
 void rgc_delete_collection(CollectionId id) {
-    ignore = id;
-    // TODO
+    collectionMap.erase(id);
 }
 
 bool rgc_new_graph(CollectionId id, const char *name, int n) {
-    ignore = id;
-    ignore = name;
-    ignore = n;
-    // TODO
-    return false;
+    if (name == nullptr || !verifyName(name) || n < 0) {
+        return false;
+    }
+
+    OptionalReference<Collection> collection = findCollection(id);
+    if (!collection) {
+        return false;
+    }
+
+    Graph graph;
+    auto& [vertices, edges] = graph;
+
+    // Insert n nodes labeled from 0 to n - 1.
+    for (int vertexNo = 0; vertexNo < n; vertexNo++) {
+        vertices.insert(vertexNo);
+    }
+
+    collection->get().insert({ name, graph });
+
+    return true;
 }
 
 void rgc_delete_graph(CollectionId id, const char *name) {
-    ignore = id;
-    ignore = name;
-    // TODO
+    if (name == nullptr) {
+        return;
+    }
+
+    OptionalReference<Collection> collection = findCollection(id);
+    if (!collection) {
+        return;
+    }
+
+    collection->get().erase(name);
 }
 
 Vertex rgc_graph_new_node(CollectionId id, const char *name) {
-    ignore = id;
-    ignore = name;
-    // TODO
-    return -1;
+    if (name == nullptr) {
+        return -1;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return -1;
+    }
+
+    auto& [nodes, edges] = graph->get();
+    if (nodes.size() == INT_MAX) {
+        return -1;
+    }
+
+    Vertex nodeNumber = smallestFreeNodeNumber(graph->get());
+    nodes.insert(nodeNumber);
+
+    return nodeNumber;
 }
 
 bool rgc_graph_delete_node(CollectionId id, const char *name, Vertex x) {
