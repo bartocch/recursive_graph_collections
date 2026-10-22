@@ -43,8 +43,13 @@ namespace cxx {
 // Namespace for helper functions and global variables.
 namespace {
 
-long lastCollectionId = -1;
-CollectionMap collectionMap;
+constinit long lastCollectionId = -1;
+
+CollectionMap& collectionMap() {
+    // Prevents the static initialization order fiasco.
+    static CollectionMap collectionMap;
+    return collectionMap;
+}
 
 constexpr NodeSet& getNodes(Graph& graph) {
     return get<0>(graph);
@@ -77,8 +82,8 @@ bool verifyGraphName(string name) {
 /** Finds a collection with the provided id and returns it.
  *  Returns nullopt if a matching collection wasn't found. */
 OptionalReference<Collection> findCollection(CollectionId id) {
-    CollectionMap::iterator it = collectionMap.find(id);
-    if (it == collectionMap.end()) {
+    CollectionMap::iterator it = collectionMap().find(id);
+    if (it == collectionMap().end()) {
         return nullopt;
     }
     return it->second;
@@ -121,13 +126,13 @@ CollectionId rgc_new_collection() {
     }
 
     int collectionId = ++lastCollectionId;
-    collectionMap.insert({ collectionId, Collection() });
+    collectionMap().insert({ collectionId, Collection() });
 
     return collectionId;
 }
 
 void rgc_delete_collection(CollectionId id) {
-    collectionMap.erase(id);
+    collectionMap().erase(id);
 }
 
 bool rgc_new_graph(CollectionId id, const char *name, int n) {
