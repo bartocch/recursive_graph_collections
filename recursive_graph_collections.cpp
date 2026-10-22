@@ -25,8 +25,11 @@ using std::unordered_map;
 template<typename T>
 using OptionalReference = optional<reference_wrapper<T>>;
 
+/** Nodes are represented by their numbers. */
 using Node = int;
 using NodeSet = set<Node>;
+/** Edges are represented by sets containing two node numbers (one for each end
+ *  of the edge). */
 using Edge = set<Node>;
 using EdgeSet = set<Edge>;
 using Graph = pair<NodeSet, EdgeSet>;
