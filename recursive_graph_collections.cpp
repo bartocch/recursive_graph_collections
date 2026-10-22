@@ -46,6 +46,14 @@ namespace {
 long lastCollectionId = -1;
 CollectionMap collectionMap;
 
+constexpr NodeSet& getNodes(Graph& graph) {
+    return get<0>(graph);
+}
+
+constexpr EdgeSet& getEdges(Graph& graph) {
+    return get<1>(graph);
+}
+
 bool verifyGraphNameChar(char ch) {
     return (ch >= 'a' && ch <= 'z')     // lowercase letters
         || (ch >= 'A' && ch <= 'Z')     // uppercase letters
@@ -88,7 +96,7 @@ OptionalReference<Graph> findGraph(CollectionId id, GraphName name) {
 }
 
 Node smallestFreeNodeNumber(Graph& graph) {
-    auto& [nodes, edges] = graph;
+    NodeSet& nodes = getNodes(graph);
 
     // TODO: Temporary solution
     for (int nodeNumber = 0; nodeNumber <= INT_MAX; nodeNumber++) {
@@ -128,7 +136,7 @@ bool rgc_new_graph(CollectionId id, const char *name, int n) {
     }
 
     Graph graph;
-    auto& [nodes, edges] = graph;
+    NodeSet& nodes = getNodes(graph);
 
     // Insert n nodes labeled from 0 to n - 1.
     for (int nodeNumber = 0; nodeNumber < n; nodeNumber++) {
@@ -163,7 +171,7 @@ Node rgc_graph_new_node(CollectionId id, const char *name) {
         return -1;
     }
 
-    auto& [nodes, edges] = graph->get();
+    NodeSet& nodes = getNodes(graph->get());
     if (nodes.size() == INT_MAX) {
         return -1;
     }
@@ -184,8 +192,7 @@ bool rgc_graph_delete_node(CollectionId id, const char *name, Node x) {
         return false;
     }
 
-    auto& [nodes, edges] = graph->get();
-
+    NodeSet& nodes = getNodes(graph->get());
     NodeSet::iterator it = nodes.find(x);
     if (it == nodes.end()) {
         return false;   // The node that we're trying to delete doesn't exist.
@@ -205,7 +212,7 @@ bool rgc_graph_add_edge(CollectionId id, const char *name, Node x, Node y) {
         return false;
     }
 
-    auto& [nodes, edges] = graph->get();
+    EdgeSet& edges = getEdges(graph->get());
 
     // Try to insert the edge while simultaneously checking if it exists.
     // (wasInserted = true if the edge didn't exist before the insertion)
@@ -223,8 +230,7 @@ bool rgc_graph_delete_edge(CollectionId id, const char *name, Node x, Node y) {
         return false;
     }
 
-    auto& [nodes, edges] = graph->get();
-
+    EdgeSet& edges = getEdges(graph->get());
     EdgeSet::iterator it = edges.find({ x, y });
     if (it == edges.end()) {
         return false;   // The edge we're trying to delete doesn't exist.
