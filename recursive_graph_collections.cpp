@@ -44,8 +44,24 @@ namespace {
 long lastCollectionId = -1;
 CollectionMap collectionMap;
 
-bool verifyName(string name) {
-    // TODO
+bool verifyGraphNameChar(char ch) {
+    return (ch >= 'a' && ch <= 'z')     // lowercase letters
+        || (ch >= 'A' && ch <= 'Z')     // uppercase letters
+        || (ch >= '0' && ch <= '9')     // digits
+        || ch == '_';                   // underscore
+}
+
+bool verifyGraphName(string name) {
+    if (name.empty()) {
+        return false;   // Graph names cannot be empty.
+    }
+
+    for (char ch : name) {
+        if (!verifyGraphNameChar(ch)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 OptionalReference<Collection> findCollection(CollectionId id) {
@@ -100,7 +116,7 @@ void rgc_delete_collection(CollectionId id) {
 }
 
 bool rgc_new_graph(CollectionId id, const char *name, int n) {
-    if (name == nullptr || !verifyName(name) || n < 0) {
+    if (name == nullptr || !verifyGraphName(name) || n < 0) {
         return false;
     }
 
