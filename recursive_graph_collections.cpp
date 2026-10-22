@@ -173,29 +173,63 @@ Node rgc_graph_new_node(CollectionId id, const char *name) {
 }
 
 bool rgc_graph_delete_node(CollectionId id, const char *name, Node x) {
-    ignore = id;
-    ignore = name;
-    ignore = x;
-    // TODO
-    return false;
+    if (name == nullptr) {
+        return false;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return false;
+    }
+
+    auto& [nodes, edges] = graph->get();
+
+    set<Node>::iterator it = nodes.find(x);
+    if (it == nodes.end()) {
+        return false;   // The node that we're trying to delete doesn't exist.
+    }
+
+    nodes.erase(it);
+    return true;
 }
 
 bool rgc_graph_add_edge(CollectionId id, const char *name, Node x, Node y) {
-    ignore = id;
-    ignore = name;
-    ignore = x;
-    ignore = y;
-    // TODO
-    return false;
+    if (name == nullptr || x == y) {
+        return false;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return false;
+    }
+
+    auto& [nodes, edges] = graph->get();
+
+    // Try to insert the edge while simultaneously checking if it exists.
+    // (wasInserted = true if the edge didn't exist before the insertion)
+    auto [it, wasInserted] = edges.insert({ x, y });
+    return wasInserted;
 }
 
 bool rgc_graph_delete_edge(CollectionId id, const char *name, Node x, Node y) {
-    ignore = id;
-    ignore = name;
-    ignore = x;
-    ignore = y;
-    // TODO
-    return false;
+    if (name == nullptr || x == y) {
+        return false;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return false;
+    }
+
+    auto& [nodes, edges] = graph->get();
+
+    set<Edge>::iterator it = edges.find({ x, y });
+    if (it == edges.end()) {
+        return false;   // The edge we're trying to delete doesn't exist.
+    }
+
+    edges.erase(it);
+    return true;
 }
 
 const char *rgc_first_graph(CollectionId id) {
