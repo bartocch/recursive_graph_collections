@@ -22,7 +22,7 @@ using Edge = pair<Vertex, Vertex>;
 using Graph = pair<set<Vertex>, set<Edge>>;
 using GraphName = string;
 using Level = size_t;
-using Collection = map<GraphName, set<Graph>>;
+using Collection = map<GraphName, Graph>;
 using CollectionId = long;
 using CollectionMap = unordered_map<CollectionId, Collection>;
 
