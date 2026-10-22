@@ -27,7 +27,7 @@ using OptionalReference = optional<reference_wrapper<T>>;
 
 using Node = int;
 using NodeSet = set<Node>;
-using Edge = set<Node, Node>;
+using Edge = set<Node>;
 using EdgeSet = set<Edge>;
 using Graph = pair<NodeSet, EdgeSet>;
 using GraphName = string;
