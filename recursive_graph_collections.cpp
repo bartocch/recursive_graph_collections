@@ -25,9 +25,9 @@ using std::unordered_map;
 template<typename T>
 using OptionalReference = optional<reference_wrapper<T>>;
 
-using Vertex = int;
-using Edge = pair<Vertex, Vertex>;
-using Graph = pair<set<Vertex>, set<Edge>>;
+using Node = int;
+using Edge = pair<Node, Node>;
+using Graph = pair<set<Node>, set<Edge>>;
 using GraphName = string;
 using Level = size_t;
 using Collection = map<GraphName, Graph>;
@@ -69,7 +69,7 @@ OptionalReference<Graph> findGraph(CollectionId id, GraphName name) {
     return it->second;
 }
 
-Vertex smallestFreeNodeNumber(Graph& graph) {
+Node smallestFreeNodeNumber(Graph& graph) {
     auto& [nodes, edges] = graph;
 
     // TODO: Temporary solution
@@ -110,11 +110,11 @@ bool rgc_new_graph(CollectionId id, const char *name, int n) {
     }
 
     Graph graph;
-    auto& [vertices, edges] = graph;
+    auto& [nodes, edges] = graph;
 
     // Insert n nodes labeled from 0 to n - 1.
-    for (int vertexNo = 0; vertexNo < n; vertexNo++) {
-        vertices.insert(vertexNo);
+    for (int nodeNumber = 0; nodeNumber < n; nodeNumber++) {
+        nodes.insert(nodeNumber);
     }
 
     collection->get().insert({ name, graph });
@@ -135,7 +135,7 @@ void rgc_delete_graph(CollectionId id, const char *name) {
     collection->get().erase(name);
 }
 
-Vertex rgc_graph_new_node(CollectionId id, const char *name) {
+Node rgc_graph_new_node(CollectionId id, const char *name) {
     if (name == nullptr) {
         return -1;
     }
@@ -150,13 +150,13 @@ Vertex rgc_graph_new_node(CollectionId id, const char *name) {
         return -1;
     }
 
-    Vertex nodeNumber = smallestFreeNodeNumber(graph->get());
+    Node nodeNumber = smallestFreeNodeNumber(graph->get());
     nodes.insert(nodeNumber);
 
     return nodeNumber;
 }
 
-bool rgc_graph_delete_node(CollectionId id, const char *name, Vertex x) {
+bool rgc_graph_delete_node(CollectionId id, const char *name, Node x) {
     ignore = id;
     ignore = name;
     ignore = x;
@@ -164,7 +164,7 @@ bool rgc_graph_delete_node(CollectionId id, const char *name, Vertex x) {
     return false;
 }
 
-bool rgc_graph_add_edge(CollectionId id, const char *name, Vertex x, Vertex y) {
+bool rgc_graph_add_edge(CollectionId id, const char *name, Node x, Node y) {
     ignore = id;
     ignore = name;
     ignore = x;
@@ -173,7 +173,7 @@ bool rgc_graph_add_edge(CollectionId id, const char *name, Vertex x, Vertex y) {
     return false;
 }
 
-bool rgc_graph_delete_edge(CollectionId id, const char *name, Vertex x, Vertex y) {
+bool rgc_graph_delete_edge(CollectionId id, const char *name, Node x, Node y) {
     ignore = id;
     ignore = name;
     ignore = x;
@@ -195,22 +195,14 @@ const char *rgc_next_graph(CollectionId id, const char *name) {
     return "";
 }
 
-Vertex rgc_first_node(CollectionId id, const char *name) {
+Node rgc_first_node(CollectionId id, const char *name) {
     ignore = id;
     ignore = name;
     // TODO
     return -1;
 }
 
-Vertex rgc_next_node(CollectionId id, const char *name, Vertex x) {
-    ignore = id;
-    ignore = name;
-    ignore = x;
-    // TODO
-    return -1;
-}
-
-Vertex rgc_first_edge(CollectionId id, const char *name, Vertex x) {
+Node rgc_next_node(CollectionId id, const char *name, Node x) {
     ignore = id;
     ignore = name;
     ignore = x;
@@ -218,7 +210,15 @@ Vertex rgc_first_edge(CollectionId id, const char *name, Vertex x) {
     return -1;
 }
 
-Vertex rgc_next_edge(CollectionId id, const char *name, Vertex x, Vertex y) {
+Node rgc_first_edge(CollectionId id, const char *name, Node x) {
+    ignore = id;
+    ignore = name;
+    ignore = x;
+    // TODO
+    return -1;
+}
+
+Node rgc_next_edge(CollectionId id, const char *name, Node x, Node y) {
     ignore = id;
     ignore = name;
     ignore = x;
@@ -230,11 +230,11 @@ Vertex rgc_next_edge(CollectionId id, const char *name, Vertex x, Vertex y) {
 bool rgc_replace_edge(CollectionId id,
                       const char *result_name,
                       const char *recipient_name,
-                      Vertex w_1,
-                      Vertex w_2,
+                      Node w_1,
+                      Node w_2,
                       const char *donor_name,
-                      Vertex v_1,
-                      Vertex v_2) {
+                      Node v_1,
+                      Node v_2) {
     ignore = id;
     ignore = result_name;
     ignore = recipient_name;
@@ -247,7 +247,7 @@ bool rgc_replace_edge(CollectionId id,
     return false;
 }
 
-ssize_t rgc_edge_level(CollectionId id, const char *name, Vertex x, Vertex y) {
+ssize_t rgc_edge_level(CollectionId id, const char *name, Node x, Node y) {
     ignore = id;
     ignore = name;
     ignore = x;
