@@ -26,8 +26,10 @@ template<typename T>
 using OptionalReference = optional<reference_wrapper<T>>;
 
 using Node = int;
+using NodeSet = set<Node>;
 using Edge = set<Node, Node>;
-using Graph = pair<set<Node>, set<Edge>>;
+using EdgeSet = set<Edge>;
+using Graph = pair<NodeSet, EdgeSet>;
 using GraphName = string;
 using Level = size_t;
 using Collection = map<GraphName, Graph>;
@@ -184,7 +186,7 @@ bool rgc_graph_delete_node(CollectionId id, const char *name, Node x) {
 
     auto& [nodes, edges] = graph->get();
 
-    set<Node>::iterator it = nodes.find(x);
+    NodeSet::iterator it = nodes.find(x);
     if (it == nodes.end()) {
         return false;   // The node that we're trying to delete doesn't exist.
     }
@@ -223,7 +225,7 @@ bool rgc_graph_delete_edge(CollectionId id, const char *name, Node x, Node y) {
 
     auto& [nodes, edges] = graph->get();
 
-    set<Edge>::iterator it = edges.find({ x, y });
+    EdgeSet::iterator it = edges.find({ x, y });
     if (it == edges.end()) {
         return false;   // The edge we're trying to delete doesn't exist.
     }
