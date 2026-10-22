@@ -74,6 +74,8 @@ bool verifyGraphName(string name) {
     return true;
 }
 
+/** Finds a collection with the provided id and returns it.
+ *  Returns nullopt if a matching collection wasn't found. */
 OptionalReference<Collection> findCollection(CollectionId id) {
     CollectionMap::iterator it = collectionMap.find(id);
     if (it == collectionMap.end()) {
@@ -82,6 +84,9 @@ OptionalReference<Collection> findCollection(CollectionId id) {
     return it->second;
 }
 
+/** Finds a graph with the provided name within a collection with the
+ *  provided id and returns that graph.
+ *  Returns nullopt if a matching collection/graph wasn't found. */
 OptionalReference<Graph> findGraph(CollectionId id, GraphName name) {
     OptionalReference<Collection> collection = findCollection(id);
     if (!collection) {
@@ -173,7 +178,7 @@ Node rgc_graph_new_node(CollectionId id, const char *name) {
 
     NodeSet& nodes = getNodes(graph->get());
     if (nodes.size() == INT_MAX) {
-        return -1;
+        return -1;      // We've run out of node numbers.
     }
 
     Node nodeNumber = smallestFreeNodeNumber(graph->get());
