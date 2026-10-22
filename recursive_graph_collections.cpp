@@ -26,7 +26,7 @@ template<typename T>
 using OptionalReference = optional<reference_wrapper<T>>;
 
 using Node = int;
-using Edge = pair<Node, Node>;
+using Edge = set<Node, Node>;
 using Graph = pair<set<Node>, set<Edge>>;
 using GraphName = string;
 using Level = size_t;
