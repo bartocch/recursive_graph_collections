@@ -29,3 +29,6 @@ recursive_graph_collections_example_2_a: recursive_graph_collections_example_2.o
 
 recursive_graph_collections_example_2_b: recursive_graph_collections_16.o recursive_graph_collections_example_2.o
 	g++ $(LDFLAGS) recursive_graph_collections_16.o recursive_graph_collections_example_2.o -o recursive_graph_collections_example_2_b
+
+unit_tests: recursive_graph_collections.cpp recursive_graph_collections.h unit_tests.cpp
+	g++ -g -Wall -Wextra -std=c++23 -fsanitize=undefined,address -DUNIT_TEST recursive_graph_collections.cpp recursive_graph_collections.h unit_tests.cpp -o unit_tests
