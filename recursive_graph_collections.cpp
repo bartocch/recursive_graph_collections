@@ -26,12 +26,12 @@ template<typename T>
 using OptionalReference = optional<reference_wrapper<T>>;
 
 using Level = size_t;
-/** Nodes are represented by their numbers. */
 using Node = int;
 using NodeSet = set<Node>;
-/** Edges are represented by sets containing two node numbers (one for each end
- *  of the edge). */
-using Edge = set<Node>;
+using Edge = pair<Node, Node>;
+/** An edge { x, y } is represented by two pairs. The first pair is (x, y)
+ *  and the second pair is (y, x). This makes it easier to implement
+ *  rgc_first_edge and rgc_next_edge. */
 using EdgeMap = map<Edge, Level>;
 using Graph = pair<NodeSet, EdgeMap>;
 using GraphName = string;
@@ -237,6 +237,7 @@ bool rgc_graph_add_edge(CollectionId id, const char *name, Node x, Node y) {
     }
 
     edges.insert({ { x, y }, 0 });
+    edges.insert({ { y, x }, 0 });
     return true;
 }
 
@@ -257,6 +258,7 @@ bool rgc_graph_delete_edge(CollectionId id, const char *name, Node x, Node y) {
     }
 
     edges.erase(it);
+    edges.erase({ y, x });
     return true;
 }
 
