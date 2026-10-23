@@ -226,7 +226,12 @@ bool rgc_graph_add_edge(CollectionId id, const char *name, Node x, Node y) {
         return false;
     }
 
+    NodeSet& nodes = getNodes(graph->get());
     EdgeSet& edges = getEdges(graph->get());
+
+    if (nodes.find(x) == nodes.end() || nodes.find(y) == nodes.end()) {
+        return false;   // One or more of the nodes doesn't exist.
+    }
 
     // Try to insert the edge while simultaneously checking if it exists.
     // (wasInserted = true if the edge didn't exist before the insertion)
