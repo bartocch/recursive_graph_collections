@@ -7,7 +7,7 @@ all: recursive_graph_collections_example_1 recursive_graph_collections_example_2
 
 clean:
 	rm -f *.o
-	rm -f recursive_graph_collections_example_1 recursive_graph_collections_example_2_a recursive_graph_collections_example_2_b
+	rm -f recursive_graph_collections_example_1 recursive_graph_collections_example_2_a recursive_graph_collections_example_2_b unit_tests
 
 recursive_graph_collections_4.o: recursive_graph_collections.cpp
 	g++ -c $(CXXFLAGS) recursive_graph_collections.cpp -o recursive_graph_collections_4.o
