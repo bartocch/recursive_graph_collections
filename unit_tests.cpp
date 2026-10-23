@@ -175,10 +175,16 @@ TEST_CASE("rgc_graph_add_edge") {
         long collectionId = rgc_new_collection();
 
         CHECK(rgc_new_graph(collectionId, "G1", 10));
-        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 8));
-        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 4));
-        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 8)); // Ensure that edges were created
-        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 4));
+
+        // Test all arg orders
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 1, 2));
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 1, 2)); // Ensure that edges were created
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 1));
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 1, 2)); // Ensure that edges were created
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 1, 2));
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 1)); // Ensure that edges were created
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 1));
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 1)); // Ensure that edges were created
     }
 
     SUBCASE("returns false if edge already exists") {
@@ -219,12 +225,17 @@ TEST_CASE("rgc_graph_delete_edge") {
         long collectionId = rgc_new_collection();
 
         CHECK(rgc_new_graph(collectionId, "G1", 10));
-        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 8));
-        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 4));
-        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 8));
-        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 4));
-        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 8));    // Ensure that edges were deleted
-        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 4));
+
+        // Test all arg orders
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 1, 2));
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 1, 2));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 1));    // Ensure that edges were deleted
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 1, 2));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 1, 2));    // Ensure that edges were deleted
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 1));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 1));    // Ensure that edges were deleted
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 1));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 1, 2));    // Ensure that edges were deleted
     }
 
     SUBCASE("returns false if collection doesn't exist") {
