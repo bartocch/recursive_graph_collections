@@ -25,16 +25,16 @@ using std::unordered_map;
 template<typename T>
 using OptionalReference = optional<reference_wrapper<T>>;
 
+using Level = size_t;
 /** Nodes are represented by their numbers. */
 using Node = int;
 using NodeSet = set<Node>;
 /** Edges are represented by sets containing two node numbers (one for each end
  *  of the edge). */
 using Edge = set<Node>;
-using EdgeSet = set<Edge>;
-using Graph = pair<NodeSet, EdgeSet>;
+using EdgeMap = map<Edge, Level>;
+using Graph = pair<NodeSet, EdgeMap>;
 using GraphName = string;
-using Level = size_t;
 using Collection = map<GraphName, Graph>;
 using CollectionId = long;
 using CollectionMap = unordered_map<CollectionId, Collection>;
@@ -58,7 +58,7 @@ constexpr NodeSet& getNodes(Graph& graph) {
     return get<0>(graph);
 }
 
-constexpr EdgeSet& getEdges(Graph& graph) {
+constexpr EdgeMap& getEdges(Graph& graph) {
     return get<1>(graph);
 }
 
@@ -227,16 +227,17 @@ bool rgc_graph_add_edge(CollectionId id, const char *name, Node x, Node y) {
     }
 
     NodeSet& nodes = getNodes(graph->get());
-    EdgeSet& edges = getEdges(graph->get());
+    EdgeMap& edges = getEdges(graph->get());
 
     if (nodes.find(x) == nodes.end() || nodes.find(y) == nodes.end()) {
         return false;   // One or more of the nodes doesn't exist.
     }
+    if (edges.find({ x, y }) != edges.end()) {
+        return false;   // Edge already exists.
+    }
 
-    // Try to insert the edge while simultaneously checking if it exists.
-    // (wasInserted = true if the edge didn't exist before the insertion)
-    auto [it, wasInserted] = edges.insert({ x, y });
-    return wasInserted;
+    edges.insert({ { x, y }, 0 });
+    return true;
 }
 
 bool rgc_graph_delete_edge(CollectionId id, const char *name, Node x, Node y) {
@@ -249,8 +250,8 @@ bool rgc_graph_delete_edge(CollectionId id, const char *name, Node x, Node y) {
         return false;
     }
 
-    EdgeSet& edges = getEdges(graph->get());
-    EdgeSet::iterator it = edges.find({ x, y });
+    EdgeMap& edges = getEdges(graph->get());
+    EdgeMap::iterator it = edges.find({ x, y });
     if (it == edges.end()) {
         return false;   // The edge we're trying to delete doesn't exist.
     }
