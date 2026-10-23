@@ -32,7 +32,17 @@ TEST_CASE("rgc_delete_collection") {
 
 TEST_CASE("rgc_new_graph") {
     SUBCASE("returns -1 on invalid arguments") {
-        // TODO
+        long collectionId = rgc_new_collection();
+
+        // name = nullptr
+        CHECK_FALSE(rgc_new_graph(collectionId, nullptr, 0));
+
+        // name contains invalid chars
+        CHECK_FALSE(rgc_new_graph(collectionId, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ąćęłńóśźż", 0));
+
+        // n < 0
+        CHECK_FALSE(rgc_new_graph(collectionId, "G1", -1));
+        CHECK_FALSE(rgc_new_graph(collectionId, "G1", -20));
     }
 
     SUBCASE("correctly creates a graph") {
@@ -43,8 +53,9 @@ TEST_CASE("rgc_new_graph") {
 }
 
 TEST_CASE("rgc_delete_graph") {
-    SUBCASE("returns -1 on invalid arguments") {
-        // TODO
+    SUBCASE("behaves as expected on invalid arguments") {
+        long collectionId = rgc_new_collection();
+        CHECK_NOTHROW(rgc_delete_graph(collectionId, nullptr));
     }
 
     SUBCASE("correctly deletes a graph") {
