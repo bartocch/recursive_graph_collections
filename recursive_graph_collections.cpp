@@ -113,7 +113,7 @@ Node smallestFreeNodeNumber(Graph& graph) {
 
     // TODO: Temporary solution
     for (int nodeNumber = 0; nodeNumber <= INT_MAX; nodeNumber++) {
-        if (nodes.find(nodeNumber) != nodes.end()) {
+        if (nodes.find(nodeNumber) == nodes.end()) {
             return nodeNumber;
         }
     }
