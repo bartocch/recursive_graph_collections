@@ -28,6 +28,11 @@ TEST_CASE("rgc_delete_collection") {
         rgc_delete_collection(collectionId);
         CHECK_FALSE(rgc_new_graph(collectionId, "G2", 1));  // Ensure the collection was deleted.
     }
+
+    SUBCASE("behaves as expected if collection doesn't exist") {
+        // Assuming there isn't a collection with id = LONG_MAX.
+        CHECK_NOTHROW(rgc_delete_collection(LONG_MAX));
+    }
 }
 
 TEST_CASE("rgc_new_graph") {
@@ -50,6 +55,17 @@ TEST_CASE("rgc_new_graph") {
         CHECK(rgc_new_graph(collectionId, "G1", 1));
         CHECK(rgc_graph_new_node(collectionId, "G1") == 1);  // Ensure the graph was created.
     }
+
+    SUBCASE("doesn't create a graph if name is duplicate") {
+        long collectionId = rgc_new_collection();
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK_FALSE(rgc_new_graph(collectionId, "G1", 20));
+    }
+
+    SUBCASE("doesn't create a graph if collection doesn't exist") {
+        // Assuming there isn't a collection with id = LONG_MAX.
+        CHECK_FALSE(rgc_new_graph(LONG_MAX, "G1", 20));
+    }
 }
 
 TEST_CASE("rgc_delete_graph") {
@@ -64,5 +80,15 @@ TEST_CASE("rgc_delete_graph") {
         CHECK(rgc_graph_new_node(collectionId, "G1") == 1);  // Ensure the graph was created.
         rgc_delete_graph(collectionId, "G1");
         CHECK(rgc_graph_new_node(collectionId, "G1") == -1); // Ensure the graph was deleted.
+    }
+
+    SUBCASE("behaves as expected if collection doesn't exist") {
+        // Assuming there isn't a collection with id = LONG_MAX.
+        CHECK_NOTHROW(rgc_delete_graph(LONG_MAX, "G1"));
+    }
+
+    SUBCASE("behaves as expected if graph doesn't exist") {
+        long collectionId = rgc_new_collection();
+        CHECK_NOTHROW(rgc_delete_graph(collectionId, "G1"));
     }
 }
