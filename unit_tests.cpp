@@ -29,14 +29,14 @@ TEST_CASE("rgc_delete_collection") {
         CHECK_FALSE(rgc_new_graph(collectionId, "G2", 1));  // Ensure the collection was deleted.
     }
 
-    SUBCASE("behaves as expected if collection doesn't exist") {
+    SUBCASE("does nothing if collection doesn't exist") {
         // Assuming there isn't a collection with id = LONG_MAX.
         CHECK_NOTHROW(rgc_delete_collection(LONG_MAX));
     }
 }
 
 TEST_CASE("rgc_new_graph") {
-    SUBCASE("returns -1 on invalid arguments") {
+    SUBCASE("returns false on invalid arguments") {
         long collectionId = rgc_new_collection();
 
         // name = nullptr
@@ -56,20 +56,20 @@ TEST_CASE("rgc_new_graph") {
         CHECK(rgc_graph_new_node(collectionId, "G1") == 1);  // Ensure the graph was created.
     }
 
-    SUBCASE("doesn't create a graph if name is duplicate") {
+    SUBCASE("returns false if name is duplicate") {
         long collectionId = rgc_new_collection();
         CHECK(rgc_new_graph(collectionId, "G1", 10));
         CHECK_FALSE(rgc_new_graph(collectionId, "G1", 20));
     }
 
-    SUBCASE("doesn't create a graph if collection doesn't exist") {
+    SUBCASE("returns false if collection doesn't exist") {
         // Assuming there isn't a collection with id = LONG_MAX.
         CHECK_FALSE(rgc_new_graph(LONG_MAX, "G1", 20));
     }
 }
 
 TEST_CASE("rgc_delete_graph") {
-    SUBCASE("behaves as expected on invalid arguments") {
+    SUBCASE("does nothing on invalid arguments") {
         long collectionId = rgc_new_collection();
         CHECK_NOTHROW(rgc_delete_graph(collectionId, nullptr));
     }
@@ -82,12 +82,12 @@ TEST_CASE("rgc_delete_graph") {
         CHECK(rgc_graph_new_node(collectionId, "G1") == -1); // Ensure the graph was deleted.
     }
 
-    SUBCASE("behaves as expected if collection doesn't exist") {
+    SUBCASE("does nothing if collection doesn't exist") {
         // Assuming there isn't a collection with id = LONG_MAX.
         CHECK_NOTHROW(rgc_delete_graph(LONG_MAX, "G1"));
     }
 
-    SUBCASE("behaves as expected if graph doesn't exist") {
+    SUBCASE("does nothing if graph doesn't exist") {
         long collectionId = rgc_new_collection();
         CHECK_NOTHROW(rgc_delete_graph(collectionId, "G1"));
     }
