@@ -1,6 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include <doctest/doctest.h>
+#include "lib/doctest.h"
 #include "recursive_graph_collections.h"
 
 using cxx::rgc_new_collection;
