@@ -366,7 +366,6 @@ ssize_t rgc_size(CollectionId id) {
     return -1;
 }
 
-
 #ifdef __cplusplus
 } // namespace
 #endif
