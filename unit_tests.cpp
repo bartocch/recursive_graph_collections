@@ -92,3 +92,155 @@ TEST_CASE("rgc_delete_graph") {
         CHECK_NOTHROW(rgc_delete_graph(collectionId, "G1"));
     }
 }
+
+TEST_CASE("rgc_graph_new_node") {
+    SUBCASE("returns -1 on invalid arguments") {
+        long collectionId = rgc_new_collection();
+
+        // name = nullptr
+        CHECK(rgc_graph_new_node(collectionId, nullptr) == -1);
+    }
+
+    SUBCASE("correctly creates nodes") {
+        long collectionId = rgc_new_collection();
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK(rgc_graph_new_node(collectionId, "G1") == 10);
+        CHECK(rgc_graph_new_node(collectionId, "G1") == 11);
+        CHECK(rgc_graph_new_node(collectionId, "G1") == 12);
+        CHECK(rgc_graph_delete_node(collectionId, "G1", 10));  // Ensure nodes were created
+        CHECK(rgc_graph_delete_node(collectionId, "G1", 11));
+        CHECK(rgc_graph_delete_node(collectionId, "G1", 12));
+    }
+
+    SUBCASE("returns -1 if collection doesn't exist") {
+        // Assuming that a collection with id LONG_MAX doesn't exist.
+        CHECK(rgc_graph_new_node(LONG_MAX, "G1") == -1);
+    }
+
+    SUBCASE("returns -1 if graph doesn't exist") {
+        long collectionId = rgc_new_collection();
+        CHECK(rgc_graph_new_node(collectionId, "G1") == -1);
+    }
+}
+
+TEST_CASE("rgc_graph_delete_node") {
+    SUBCASE("returns false on invalid arguments") {
+        long collectionId = rgc_new_collection();
+
+        // name = nullptr
+        CHECK_FALSE(rgc_graph_delete_node(collectionId, nullptr, 10));
+    }
+
+    SUBCASE("correctly deletes nodes") {
+        long collectionId = rgc_new_collection();
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK(rgc_graph_delete_node(collectionId, "G1", 5));
+        CHECK(rgc_graph_delete_node(collectionId, "G1", 6));
+        CHECK(rgc_graph_delete_node(collectionId, "G1", 8));
+        CHECK(rgc_graph_new_node(collectionId, "G1") == 5);
+        CHECK(rgc_graph_new_node(collectionId, "G1") == 6);
+        CHECK(rgc_graph_new_node(collectionId, "G1") == 8);
+    }
+
+    SUBCASE("returns false if collection doesn't exist") {
+        // Assuming that a collection with id LONG_MAX doesn't exist.
+        CHECK_FALSE(rgc_graph_delete_node(LONG_MAX, "G1", 10));
+    }
+
+    SUBCASE("returns false if graph doesn't exist") {
+        long collectionId = rgc_new_collection();
+        CHECK_FALSE(rgc_graph_delete_node(collectionId, "G1", 10));
+    }
+
+    SUBCASE("returns false if node doesn't exist") {
+        long collectionId = rgc_new_collection();
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK_FALSE(rgc_graph_delete_node(collectionId, "G1", 10));
+    }
+}
+
+TEST_CASE("rgc_graph_add_edge") {
+    SUBCASE("returns false on invalid arguments") {
+        long collectionId = rgc_new_collection();
+
+        // name = nullptr
+        CHECK_FALSE(rgc_graph_add_edge(collectionId, nullptr, 10, 20));
+
+        // x = y
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK_FALSE(rgc_graph_add_edge(collectionId, "G1", 5, 5));
+    }
+
+    SUBCASE("correctly creates edges") {
+        long collectionId = rgc_new_collection();
+
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 8));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 4));
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 8)); // Ensure that edges were created
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 4));
+    }
+
+    SUBCASE("returns false if edge already exists") {
+        long collectionId = rgc_new_collection();
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 8));
+        CHECK_FALSE(rgc_graph_add_edge(collectionId, "G1", 2, 8));
+    }
+
+    SUBCASE("returns false if collection doesn't exist") {
+        // Assuming that a collection with id LONG_MAX doesn't exist.
+        CHECK_FALSE(rgc_graph_add_edge(LONG_MAX, "G1", 2, 5));
+    }
+
+    SUBCASE("returns false if graph doesn't exist") {
+        long collectionId = rgc_new_collection();
+        CHECK_FALSE(rgc_graph_add_edge(collectionId, "G1", 2, 5));
+    }
+
+    SUBCASE("returns false if node doesn't exist") {
+        long collectionId = rgc_new_collection();
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK_FALSE(rgc_graph_add_edge(collectionId, "G1", 10, 5));
+        CHECK_FALSE(rgc_graph_add_edge(collectionId, "G1", 5, 10));
+        CHECK_FALSE(rgc_graph_add_edge(collectionId, "G1", 10, 11));
+    }
+}
+
+TEST_CASE("rgc_graph_delete_edge") {
+    SUBCASE("returns false on invalid arguments") {
+        long collectionId = rgc_new_collection();
+
+        // name = nullptr
+        CHECK_FALSE(rgc_graph_delete_edge(collectionId, nullptr, 10, 20));
+    }
+
+    SUBCASE("correctly deletes edges") {
+        long collectionId = rgc_new_collection();
+
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 8));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 4));
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 8));
+        CHECK(rgc_graph_delete_edge(collectionId, "G1", 2, 4));
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 8));    // Ensure that edges were deleted
+        CHECK(rgc_graph_add_edge(collectionId, "G1", 2, 4));
+    }
+
+    SUBCASE("returns false if collection doesn't exist") {
+        // Assuming that a collection with id LONG_MAX doesn't exist.
+        CHECK_FALSE(rgc_graph_delete_edge(LONG_MAX, "G1", 10, 20));
+    }
+
+    SUBCASE("returns false if graph doesn't exist") {
+        long collectionId = rgc_new_collection();
+        CHECK_FALSE(rgc_graph_delete_edge(collectionId, "G1", 10, 20));
+    }
+
+    SUBCASE("returns false if edge doesn't exist") {
+        long collectionId = rgc_new_collection();
+        CHECK(rgc_new_graph(collectionId, "G1", 10));
+        CHECK_FALSE(rgc_graph_delete_edge(collectionId, "G1", 2, 8));
+        CHECK_FALSE(rgc_graph_delete_edge(collectionId, "G1", 4, 5));
+    }
+}
