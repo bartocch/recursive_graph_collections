@@ -13,9 +13,11 @@
 #endif
 
 using std::map;
+using std::max;
+using std::move;
 using std::nullopt;
-using std::pair;
 using std::optional;
+using std::pair;
 using std::reference_wrapper;
 using std::set;
 using std::string;
@@ -439,7 +441,7 @@ bool rgc_replace_edge(CollectionId id,
         Level donor_level = rgc_graph_level(id, donor_name);
         Level replace_level = recipient_edge_it->second;
 
-        new_level = std::max(donor_level, replace_level) + 1;
+        new_level = max(donor_level, replace_level) + 1;
 
         if (new_level >= LEVEL_MAX) {
             return false;   // Level limit exceeded.
@@ -484,7 +486,7 @@ bool rgc_replace_edge(CollectionId id,
         result_edges[{result_x, result_y}] = new_level;
     }
 
-    collection->get().emplace(result_name, std::move(result_graph)); // Add the result graph to the collection.
+    collection->get().emplace(result_name, move(result_graph)); // Add the result graph to the collection.
     return true;
 }
 
@@ -522,7 +524,7 @@ ssize_t rgc_graph_level(CollectionId id, const char *name) {
     Level maxLevel = 0;
 
     for (auto& edge : edges) {
-        maxLevel = std::max(maxLevel, edge.second);
+        maxLevel = max(maxLevel, edge.second);
     }
 
     return maxLevel;
