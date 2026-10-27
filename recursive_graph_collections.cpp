@@ -1,4 +1,4 @@
-#include <limits.h>
+#include <climits>
 #include <map>
 #include <optional>
 #include <set>
@@ -329,7 +329,7 @@ Node rgc_next_node(CollectionId id, const char *name, Node x) {
     }
 
     NodeSet& nodes = getNodes(graph->get());
-    NodeSet::iterator it = nodes.upper_bound(x);  
+    NodeSet::iterator it = nodes.upper_bound(x);
     if (it == nodes.end()) {
         return -1;   // The node x was the last one.
     }
@@ -452,7 +452,7 @@ bool rgc_replace_edge(CollectionId id,
 
     result_edges.erase({w_1, w_2}); // Remove from the result graph the edge {w_1, w_2}.
     result_edges.erase({w_2, w_1}); // Remove from the result graph the edge {w_2, w_1}.
- 
+
     map<Node, Node> node_mapping; // Mapping donor nodes to result nodes.
 
     node_mapping[v_1] = w_1;
