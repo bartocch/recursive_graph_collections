@@ -68,7 +68,7 @@ bool verifyGraphNameChar(char ch) {
         || ch == '_';                   // underscore
 }
 
-bool verifyGraphName(string name) {
+bool verifyGraphName(const string& name) {
     if (name.empty()) {
         return false;   // Graph names cannot be empty.
     }
@@ -94,7 +94,7 @@ OptionalReference<Collection> findCollection(CollectionId id) {
 /** Finds a graph with the provided name within a collection with the
  *  provided id and returns that graph.
  *  Returns nullopt if a matching collection/graph wasn't found. */
-OptionalReference<Graph> findGraph(CollectionId id, GraphName name) {
+OptionalReference<Graph> findGraph(CollectionId id, const GraphName& name) {
     OptionalReference<Collection> collection = findCollection(id);
     if (!collection) {
         return nullopt;
