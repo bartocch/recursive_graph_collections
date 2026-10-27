@@ -12,7 +12,6 @@
 #define LEVEL_MAX 4
 #endif
 
-using std::ignore;  // For ignoring unused function params (temporary)
 using std::map;
 using std::nullopt;
 using std::pair;
@@ -110,15 +109,17 @@ OptionalReference<Graph> findGraph(CollectionId id, GraphName name) {
 
 Node smallestFreeNodeNumber(Graph& graph) {
     NodeSet& nodes = getNodes(graph);
+    Node resultNode = 0;
 
-    // TODO: Temporary solution
-    for (int nodeNumber = 0; nodeNumber <= INT_MAX; nodeNumber++) {
-        if (nodes.find(nodeNumber) == nodes.end()) {
-            return nodeNumber;
+    for (Node node : nodes) {
+        if (node == resultNode) {
+            resultNode++;
+        } else if (node > resultNode) {
+            break;  // Found a gap in the node numbers.
         }
     }
 
-    return -1;
+    return resultNode;
 }
 
 } // namespace
@@ -128,7 +129,7 @@ CollectionId rgc_new_collection() {
         return -1;      // Return -1 if no more ids left.
     }
 
-    int collectionId = ++lastCollectionId;
+    CollectionId collectionId = ++lastCollectionId;
     collectionMap().insert({ collectionId, Collection() });
 
     return collectionId;
@@ -212,6 +213,16 @@ bool rgc_graph_delete_node(CollectionId id, const char *name, Node x) {
         return false;   // The node that we're trying to delete doesn't exist.
     }
 
+    EdgeMap& edges = getEdges(graph->get());
+    // Remove all edges connected to the node x.
+    for (EdgeMap::iterator edgeIt = edges.begin(); edgeIt != edges.end(); ) {
+        if (edgeIt->first.first == x || edgeIt->first.second == x) {
+            edgeIt = edges.erase(edgeIt);
+        } else {
+            ++edgeIt;
+        }
+    }
+
     nodes.erase(it);
     return true;
 }
@@ -263,48 +274,117 @@ bool rgc_graph_delete_edge(CollectionId id, const char *name, Node x, Node y) {
 }
 
 const char *rgc_first_graph(CollectionId id) {
-    ignore = id;
-    // TODO
-    return "";
+    OptionalReference<Collection> collection = findCollection(id);
+    if (!collection || collection->get().empty()) {
+        return nullptr;
+    }
+
+    return collection->get().begin()->first.c_str();
 }
 
 const char *rgc_next_graph(CollectionId id, const char *name) {
-    ignore = id;
-    ignore = name;
-    // TODO
-    return "";
+    if (name == nullptr) {
+        return nullptr;
+    }
+
+    OptionalReference<Collection> collection = findCollection(id);
+    if (!collection) {
+        return nullptr;
+    }
+
+    Collection::iterator it = collection->get().find(name);
+    if (it == collection->get().end()) {
+        return nullptr; // The graph with this name doesn't exist.
+    }
+
+    ++it;
+    if (it == collection->get().end()) {
+        return nullptr; // The graph with this name was the last one.
+    }
+
+    return it->first.c_str();
 }
 
 Node rgc_first_node(CollectionId id, const char *name) {
-    ignore = id;
-    ignore = name;
-    // TODO
-    return -1;
+    if (name == nullptr) {
+        return -1;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph || getNodes(graph->get()).empty()) {
+        return -1;
+    }
+
+    return *getNodes(graph->get()).begin();
 }
 
 Node rgc_next_node(CollectionId id, const char *name, Node x) {
-    ignore = id;
-    ignore = name;
-    ignore = x;
-    // TODO
-    return -1;
+    if (name == nullptr) {
+        return -1;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return -1;
+    }
+
+    NodeSet& nodes = getNodes(graph->get());
+    NodeSet::iterator it = nodes.upper_bound(x);  
+    if (it == nodes.end()) {
+        return -1;   // The node x was the last one.
+    }
+
+    return *it;
 }
 
 Node rgc_first_edge(CollectionId id, const char *name, Node x) {
-    ignore = id;
-    ignore = name;
-    ignore = x;
-    // TODO
-    return -1;
+    if (name == nullptr) {
+        return -1;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return -1;
+    }
+
+    NodeSet& nodes = getNodes(graph->get());
+    EdgeMap& edges = getEdges(graph->get());
+
+    if (nodes.find(x) == nodes.end()) {
+        return -1;   // The node x doesn't exist.
+    }
+
+    EdgeMap::iterator it = edges.lower_bound({ x, 0 });
+    if (it == edges.end() || it->first.first != x) {
+        return -1;   // The node x has no edges.
+    }
+
+    return it->first.second;
 }
 
 Node rgc_next_edge(CollectionId id, const char *name, Node x, Node y) {
-    ignore = id;
-    ignore = name;
-    ignore = x;
-    ignore = y;
-    // TODO
-    return -1;
+    if (name == nullptr) {
+        return -1;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return -1;
+    }
+
+    NodeSet& nodes = getNodes(graph->get());
+    EdgeMap& edges = getEdges(graph->get());
+
+    if (nodes.find(x) == nodes.end()) {
+        return -1;   // The node x doesn't exist.
+    }
+
+    EdgeMap::iterator it = edges.upper_bound({ x, y });
+    if (it == edges.end() || it->first.first != x) {
+        return -1;   // No edges exist to nodes greater than y for node x.
+    }
+
+    return it->first.second;
 }
 
 bool rgc_replace_edge(CollectionId id,
@@ -315,57 +395,176 @@ bool rgc_replace_edge(CollectionId id,
                       const char *donor_name,
                       Node v_1,
                       Node v_2) {
-    ignore = id;
-    ignore = result_name;
-    ignore = recipient_name;
-    ignore = w_1;
-    ignore = w_2;
-    ignore = donor_name;
-    ignore = v_1;
-    ignore = v_2;
-    // TODO
-    return false;
+
+    if (result_name == nullptr || recipient_name == nullptr ||
+       donor_name == nullptr || verifyGraphName(result_name) == false) {
+        return false;
+    }
+
+    OptionalReference<Collection> collection = findCollection(id);
+    if (!collection || collection->get().contains(result_name)) {
+        return false;
+    }
+
+    OptionalReference<Graph> recipient_graph = findGraph(id, recipient_name);
+    OptionalReference<Graph> donor_graph = findGraph(id, donor_name);
+
+    if (!recipient_graph || !donor_graph) {
+        return false;
+    }
+
+    NodeSet& recipient_nodes = getNodes(recipient_graph->get());
+    NodeSet& donor_nodes = getNodes(donor_graph->get());
+    EdgeMap& recipient_edges = getEdges(recipient_graph->get());
+    EdgeMap& donor_edges = getEdges(donor_graph->get());
+
+    if (!recipient_nodes.contains(w_1) || !recipient_nodes.contains(w_2) ||
+        !donor_nodes.contains(v_1) || !donor_nodes.contains(v_2)) {
+        return false;   // One or more of the nodes doesn't exist.
+    }
+
+    EdgeMap::iterator recipient_edge_it = recipient_edges.find({w_1, w_2});
+
+    if (v_1 == v_2 || recipient_edge_it == recipient_edges.end()) {
+        return false;   // Invalid edge replacement.
+    }
+
+    if (donor_nodes.size() - 2 > INT_MAX - recipient_nodes.size()) {
+        return false;   // Not enough space for new nodes.
+    }
+
+    Level new_level = 0;
+
+    if (!donor_edges.empty()) {
+        Level donor_level = rgc_graph_level(id, donor_name);
+        Level replace_level = recipient_edge_it->second;
+
+        new_level = std::max(donor_level, replace_level) + 1;
+
+        if (new_level >= LEVEL_MAX) {
+            return false;   // Level limit exceeded.
+        }
+    }
+
+    Graph result_graph = recipient_graph->get(); // Creating result graph as a copy of the recipient graph.
+    NodeSet& result_nodes = getNodes(result_graph);
+    EdgeMap& result_edges = getEdges(result_graph);
+
+    result_edges.erase({w_1, w_2}); // Remove from the result graph the edge {w_1, w_2}.
+    result_edges.erase({w_2, w_1}); // Remove from the result graph the edge {w_2, w_1}.
+ 
+    map<Node, Node> node_mapping; // Mapping donor nodes to result nodes.
+
+    node_mapping[v_1] = w_1;
+    node_mapping[v_2] = w_2;
+
+    Node next_free_node = 0;
+
+    for (Node donor_node : donor_nodes) {
+        if (donor_node == v_1 || donor_node == v_2) {
+            continue; // Skip nodes v_1 and v_2
+        }
+
+        while (result_nodes.contains(next_free_node)) {
+            ++next_free_node; // Find the next free node number in the result graph.
+        }
+
+        result_nodes.insert(next_free_node); // Add the new node to the result graph.
+        node_mapping[donor_node] = next_free_node;
+        ++next_free_node;
+    }
+
+    for (EdgeMap::iterator it = donor_edges.begin(); it != donor_edges.end(); ++it) {
+        Node donor_x = it->first.first;
+        Node donor_y = it->first.second;
+
+        Node result_x = node_mapping[donor_x];
+        Node result_y = node_mapping[donor_y];
+
+        result_edges[{result_x, result_y}] = new_level;
+    }
+
+    collection->get().emplace(result_name, std::move(result_graph)); // Add the result graph to the collection.
+    return true;
 }
 
 ssize_t rgc_edge_level(CollectionId id, const char *name, Node x, Node y) {
-    ignore = id;
-    ignore = name;
-    ignore = x;
-    ignore = y;
-    // TODO
-    return -1;
+    if (name == nullptr) {
+        return -1;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return -1;
+    }
+
+    EdgeMap& edges = getEdges(graph->get());
+    EdgeMap::iterator it = edges.find({ x, y });
+
+    if (it == edges.end()) {
+        return -1;   // The edge { x, y } doesn't exist.
+    }
+
+    return it->second;
 }
 
 ssize_t rgc_graph_level(CollectionId id, const char *name) {
-    ignore = id;
-    ignore = name;
-    // TODO
-    return -1;
+    if (name == nullptr) {
+        return -1;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return -1;
+    }
+
+    EdgeMap& edges = getEdges(graph->get());
+    Level maxLevel = 0;
+
+    for (auto& edge : edges) {
+        maxLevel = std::max(maxLevel, edge.second);
+    }
+
+    return maxLevel;
 }
 
 ssize_t rgc_max_level() {
-    // TODO
-    return -1;
+    return LEVEL_MAX - 1;
 }
 
 ssize_t rgc_count_nodes(CollectionId id, const char *name) {
-    ignore = id;
-    ignore = name;
-    // TODO
-    return -1;
+    if (name == nullptr) {
+        return -1;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return -1;
+    }
+
+    return getNodes(graph->get()).size();
 }
 
 ssize_t rgc_count_edges(CollectionId id, const char *name) {
-    ignore = id;
-    ignore = name;
-    // TODO
-    return -1;
+    if (name == nullptr) {
+        return -1;
+    }
+
+    OptionalReference<Graph> graph = findGraph(id, name);
+    if (!graph) {
+        return -1;
+    }
+
+    return getEdges(graph->get()).size() / 2;  // Each edge is stored twice.
 }
 
 ssize_t rgc_size(CollectionId id) {
-    ignore = id;
-    // TODO
-    return -1;
+    OptionalReference<Collection> collection = findCollection(id);
+    if (!collection) {
+        return -1;
+    }
+
+    return collection->get().size();
 }
 
 #ifdef __cplusplus

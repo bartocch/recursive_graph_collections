@@ -2,6 +2,7 @@
 
 #include "lib/doctest.h"
 #include "recursive_graph_collections.h"
+#include <climits>
 
 using cxx::rgc_new_collection;
 using cxx::rgc_delete_collection;
@@ -254,4 +255,188 @@ TEST_CASE("rgc_graph_delete_edge") {
         CHECK_FALSE(rgc_graph_delete_edge(collectionId, "G1", 2, 8));
         CHECK_FALSE(rgc_graph_delete_edge(collectionId, "G1", 4, 5));
     }
+}
+
+TEST_CASE("iterators with missing node numbers") {
+    long id = rgc_new_collection();
+    REQUIRE(rgc_new_graph(id, "G", 5));
+
+    REQUIRE(rgc_graph_delete_node(id, "G", 2));
+
+    CHECK(cxx::rgc_first_node(id, "G") == 0);
+    CHECK(cxx::rgc_next_node(id, "G", 2) == 3);
+    CHECK(cxx::rgc_next_node(id, "G", -1) == 0);
+    CHECK(cxx::rgc_next_node(id, "G", INT_MAX) == -1);
+
+    REQUIRE(rgc_graph_add_edge(id, "G", 0, 1));
+    REQUIRE(rgc_graph_add_edge(id, "G", 0, 4));
+
+    CHECK(cxx::rgc_first_edge(id, "G", 0) == 1);
+    CHECK(cxx::rgc_next_edge(id, "G", 0, 2) == 4);
+    CHECK(cxx::rgc_next_edge(id, "G", 0, 4) == -1);
+    CHECK(cxx::rgc_next_edge(id, "G", 0, INT_MAX) == -1);
+    CHECK(cxx::rgc_first_edge(id, "G", 3) == -1);
+
+    rgc_delete_collection(id);
+}
+
+
+TEST_CASE("deleting node removes all incident edges") {
+    long id = rgc_new_collection();
+    REQUIRE(rgc_new_graph(id, "G", 4));
+
+    REQUIRE(rgc_graph_add_edge(id, "G", 0, 1));
+    REQUIRE(rgc_graph_add_edge(id, "G", 1, 2));
+    REQUIRE(rgc_graph_add_edge(id, "G", 1, 3));
+    REQUIRE(rgc_graph_add_edge(id, "G", 0, 3));
+
+    REQUIRE(rgc_graph_delete_node(id, "G", 1));
+
+    CHECK(cxx::rgc_count_nodes(id, "G") == 3);
+    CHECK(cxx::rgc_count_edges(id, "G") == 1);
+    CHECK(cxx::rgc_edge_level(id, "G", 0, 1) == -1);
+    CHECK(cxx::rgc_edge_level(id, "G", 1, 2) == -1);
+    CHECK(cxx::rgc_edge_level(id, "G", 0, 3) == 0);
+
+    rgc_delete_collection(id);
+}
+
+
+TEST_CASE("replace_edge with gaps in numbering") {
+    long id = rgc_new_collection();
+
+    REQUIRE(rgc_new_graph(id, "R", 5));
+    REQUIRE(rgc_graph_delete_node(id, "R", 2));
+    REQUIRE(rgc_graph_delete_node(id, "R", 3));
+    REQUIRE(rgc_graph_add_edge(id, "R", 0, 1));
+
+    REQUIRE(rgc_new_graph(id, "D", 4));
+    REQUIRE(rgc_graph_add_edge(id, "D", 0, 1));
+    REQUIRE(rgc_graph_add_edge(id, "D", 0, 2));
+    REQUIRE(rgc_graph_add_edge(id, "D", 1, 3));
+
+    if (cxx::rgc_max_level() > 0) {
+        REQUIRE(cxx::rgc_replace_edge(
+            id, "X", "R", 0, 1, "D", 2, 3
+        ));
+
+        CHECK(cxx::rgc_count_nodes(id, "X") == 5);
+        CHECK(cxx::rgc_count_edges(id, "X") == 3);
+
+        // Donor nodes 0 and 1 receive numbers 2 and 3.
+        CHECK(cxx::rgc_edge_level(id, "X", 2, 3) == 1);
+        CHECK(cxx::rgc_edge_level(id, "X", 0, 2) == 1);
+        CHECK(cxx::rgc_edge_level(id, "X", 1, 3) == 1);
+        CHECK(cxx::rgc_edge_level(id, "X", 0, 1) == -1);
+
+        CHECK(cxx::rgc_count_edges(id, "R") == 1);
+        CHECK(cxx::rgc_count_edges(id, "D") == 3);
+    }
+
+    rgc_delete_collection(id);
+}
+
+
+TEST_CASE("replace_edge with edgeless donor") {
+    long id = rgc_new_collection();
+
+    REQUIRE(rgc_new_graph(id, "R", 3));
+    REQUIRE(rgc_graph_add_edge(id, "R", 0, 1));
+    REQUIRE(rgc_graph_add_edge(id, "R", 1, 2));
+
+    REQUIRE(rgc_new_graph(id, "D", 3));
+
+    REQUIRE(cxx::rgc_replace_edge(
+        id, "X", "R", 0, 1, "D", 0, 1
+    ));
+
+    CHECK(cxx::rgc_count_nodes(id, "X") == 4);
+    CHECK(cxx::rgc_count_edges(id, "X") == 1);
+    CHECK(cxx::rgc_graph_level(id, "X") == 0);
+
+    CHECK(cxx::rgc_edge_level(id, "X", 0, 1) == -1);
+    CHECK(cxx::rgc_edge_level(id, "X", 1, 2) == 0);
+    CHECK(cxx::rgc_first_edge(id, "X", 3) == -1);
+
+    CHECK(cxx::rgc_count_edges(id, "R") == 2);
+
+    rgc_delete_collection(id);
+}
+
+
+TEST_CASE("replace_edge with same donor and recipient") {
+    long id = rgc_new_collection();
+
+    REQUIRE(rgc_new_graph(id, "G", 3));
+    REQUIRE(rgc_graph_add_edge(id, "G", 0, 1));
+    REQUIRE(rgc_graph_add_edge(id, "G", 1, 2));
+
+    if (cxx::rgc_max_level() > 0) {
+        REQUIRE(cxx::rgc_replace_edge(
+            id, "X", "G", 0, 1, "G", 0, 2
+        ));
+
+        CHECK(cxx::rgc_count_nodes(id, "X") == 4);
+        CHECK(cxx::rgc_count_edges(id, "X") == 3);
+        CHECK(cxx::rgc_graph_level(id, "X") == 1);
+
+        CHECK(cxx::rgc_edge_level(id, "X", 0, 3) == 1);
+        CHECK(cxx::rgc_edge_level(id, "X", 3, 1) == 1);
+        CHECK(cxx::rgc_edge_level(id, "X", 1, 2) == 0);
+
+        // Original graph must remain unchanged.
+        CHECK(cxx::rgc_count_nodes(id, "G") == 3);
+        CHECK(cxx::rgc_count_edges(id, "G") == 2);
+    }
+
+    rgc_delete_collection(id);
+}
+
+
+TEST_CASE("replace_edge level boundary") {
+    long id = rgc_new_collection();
+
+    REQUIRE(rgc_new_graph(id, "L0", 2));
+    REQUIRE(rgc_graph_add_edge(id, "L0", 0, 1));
+
+    std::string current = "L0";
+    auto max_level = cxx::rgc_max_level();
+
+    for (decltype(max_level) level = 1;
+         level <= max_level; ++level) {
+
+        std::string next = "L" + std::to_string(level);
+
+        REQUIRE(cxx::rgc_replace_edge(
+            id, next.c_str(), current.c_str(),
+            0, 1, "L0", 0, 1
+        ));
+
+        CHECK(cxx::rgc_edge_level(
+            id, next.c_str(), 0, 1
+        ) == level);
+
+        current = next;
+    }
+
+    // Creating an edge above LEVEL_MAX - 1 must fail.
+    CHECK_FALSE(cxx::rgc_replace_edge(
+        id, "Overflow", current.c_str(),
+        0, 1, "L0", 0, 1
+    ));
+
+    CHECK(cxx::rgc_count_nodes(id, "Overflow") == -1);
+
+    // An edgeless donor is still allowed.
+    REQUIRE(rgc_new_graph(id, "Empty", 2));
+
+    REQUIRE(cxx::rgc_replace_edge(
+        id, "Gone", current.c_str(),
+        0, 1, "Empty", 0, 1
+    ));
+
+    CHECK(cxx::rgc_count_edges(id, "Gone") == 0);
+    CHECK(cxx::rgc_graph_level(id, "Gone") == 0);
+
+    rgc_delete_collection(id);
 }
