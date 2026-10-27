@@ -1,4 +1,4 @@
-#include <limits.h>
+#include <climits>
 #include <map>
 #include <optional>
 #include <set>
@@ -13,9 +13,11 @@
 #endif
 
 using std::map;
+using std::max;
+using std::move;
 using std::nullopt;
-using std::pair;
 using std::optional;
+using std::pair;
 using std::reference_wrapper;
 using std::set;
 using std::string;
@@ -68,7 +70,7 @@ bool verifyGraphNameChar(char ch) {
         || ch == '_';                   // underscore
 }
 
-bool verifyGraphName(string name) {
+bool verifyGraphName(const GraphName& name) {
     if (name.empty()) {
         return false;   // Graph names cannot be empty.
     }
@@ -94,7 +96,7 @@ OptionalReference<Collection> findCollection(CollectionId id) {
 /** Finds a graph with the provided name within a collection with the
  *  provided id and returns that graph.
  *  Returns nullopt if a matching collection/graph wasn't found. */
-OptionalReference<Graph> findGraph(CollectionId id, GraphName name) {
+OptionalReference<Graph> findGraph(CollectionId id, const GraphName& name) {
     OptionalReference<Collection> collection = findCollection(id);
     if (!collection) {
         return nullopt;
@@ -329,7 +331,7 @@ Node rgc_next_node(CollectionId id, const char *name, Node x) {
     }
 
     NodeSet& nodes = getNodes(graph->get());
-    NodeSet::iterator it = nodes.upper_bound(x);  
+    NodeSet::iterator it = nodes.upper_bound(x);
     if (it == nodes.end()) {
         return -1;   // The node x was the last one.
     }
@@ -406,85 +408,85 @@ bool rgc_replace_edge(CollectionId id,
         return false;
     }
 
-    OptionalReference<Graph> recipient_graph = findGraph(id, recipient_name);
-    OptionalReference<Graph> donor_graph = findGraph(id, donor_name);
+    OptionalReference<Graph> recipientGraph = findGraph(id, recipient_name);
+    OptionalReference<Graph> donorGraph = findGraph(id, donor_name);
 
-    if (!recipient_graph || !donor_graph) {
+    if (!recipientGraph || !donorGraph) {
         return false;
     }
 
-    NodeSet& recipient_nodes = getNodes(recipient_graph->get());
-    NodeSet& donor_nodes = getNodes(donor_graph->get());
-    EdgeMap& recipient_edges = getEdges(recipient_graph->get());
-    EdgeMap& donor_edges = getEdges(donor_graph->get());
+    NodeSet& recipientNodes = getNodes(recipientGraph->get());
+    NodeSet& donorNodes = getNodes(donorGraph->get());
+    EdgeMap& recipientEdges = getEdges(recipientGraph->get());
+    EdgeMap& donorEdges = getEdges(donorGraph->get());
 
-    if (!recipient_nodes.contains(w_1) || !recipient_nodes.contains(w_2) ||
-        !donor_nodes.contains(v_1) || !donor_nodes.contains(v_2)) {
+    if (!recipientNodes.contains(w_1) || !recipientNodes.contains(w_2) ||
+        !donorNodes.contains(v_1) || !donorNodes.contains(v_2)) {
         return false;   // One or more of the nodes doesn't exist.
     }
 
-    EdgeMap::iterator recipient_edge_it = recipient_edges.find({w_1, w_2});
+    EdgeMap::iterator recipientEdgeIt = recipientEdges.find({ w_1, w_2 });
 
-    if (v_1 == v_2 || recipient_edge_it == recipient_edges.end()) {
+    if (v_1 == v_2 || recipientEdgeIt == recipientEdges.end()) {
         return false;   // Invalid edge replacement.
     }
 
-    if (donor_nodes.size() - 2 > INT_MAX - recipient_nodes.size()) {
+    if (donorNodes.size() - 2 > INT_MAX - recipientNodes.size()) {
         return false;   // Not enough space for new nodes.
     }
 
-    Level new_level = 0;
+    Level newLevel = 0;
 
-    if (!donor_edges.empty()) {
-        Level donor_level = rgc_graph_level(id, donor_name);
-        Level replace_level = recipient_edge_it->second;
+    if (!donorEdges.empty()) {
+        Level donorLevel = rgc_graph_level(id, donor_name);
+        Level replaceLevel = recipientEdgeIt->second;
 
-        new_level = std::max(donor_level, replace_level) + 1;
+        newLevel = max(donorLevel, replaceLevel) + 1;
 
-        if (new_level >= LEVEL_MAX) {
+        if (newLevel >= LEVEL_MAX) {
             return false;   // Level limit exceeded.
         }
     }
 
-    Graph result_graph = recipient_graph->get(); // Creating result graph as a copy of the recipient graph.
-    NodeSet& result_nodes = getNodes(result_graph);
-    EdgeMap& result_edges = getEdges(result_graph);
+    Graph resultGraph = recipientGraph->get(); // Creating result graph as a copy of the recipient graph.
+    NodeSet& resultNodes = getNodes(resultGraph);
+    EdgeMap& resultEdges = getEdges(resultGraph);
 
-    result_edges.erase({w_1, w_2}); // Remove from the result graph the edge {w_1, w_2}.
-    result_edges.erase({w_2, w_1}); // Remove from the result graph the edge {w_2, w_1}.
- 
-    map<Node, Node> node_mapping; // Mapping donor nodes to result nodes.
+    resultEdges.erase({ w_1, w_2 }); // Remove from the result graph the edge { w_1, w_2 }.
+    resultEdges.erase({ w_2, w_1 }); // Remove from the result graph the edge { w_2, w_1 }.
 
-    node_mapping[v_1] = w_1;
-    node_mapping[v_2] = w_2;
+    map<Node, Node> nodeMapping; // Mapping donor nodes to result nodes.
 
-    Node next_free_node = 0;
+    nodeMapping[v_1] = w_1;
+    nodeMapping[v_2] = w_2;
 
-    for (Node donor_node : donor_nodes) {
-        if (donor_node == v_1 || donor_node == v_2) {
+    Node nextFreeNode = 0;
+
+    for (Node donorNode : donorNodes) {
+        if (donorNode == v_1 || donorNode == v_2) {
             continue; // Skip nodes v_1 and v_2
         }
 
-        while (result_nodes.contains(next_free_node)) {
-            ++next_free_node; // Find the next free node number in the result graph.
+        while (resultNodes.contains(nextFreeNode)) {
+            ++nextFreeNode; // Find the next free node number in the result graph.
         }
 
-        result_nodes.insert(next_free_node); // Add the new node to the result graph.
-        node_mapping[donor_node] = next_free_node;
-        ++next_free_node;
+        resultNodes.insert(nextFreeNode); // Add the new node to the result graph.
+        nodeMapping[donorNode] = nextFreeNode;
+        ++nextFreeNode;
     }
 
-    for (EdgeMap::iterator it = donor_edges.begin(); it != donor_edges.end(); ++it) {
-        Node donor_x = it->first.first;
-        Node donor_y = it->first.second;
+    for (EdgeMap::iterator it = donorEdges.begin(); it != donorEdges.end(); ++it) {
+        Node donorX = it->first.first;
+        Node donorY = it->first.second;
 
-        Node result_x = node_mapping[donor_x];
-        Node result_y = node_mapping[donor_y];
+        Node resultX = nodeMapping[donorX];
+        Node resultY = nodeMapping[donorY];
 
-        result_edges[{result_x, result_y}] = new_level;
+        resultEdges[{ resultX, resultY }] = newLevel;
     }
 
-    collection->get().emplace(result_name, std::move(result_graph)); // Add the result graph to the collection.
+    collection->get().emplace(result_name, move(resultGraph)); // Add the result graph to the collection.
     return true;
 }
 
@@ -522,7 +524,7 @@ ssize_t rgc_graph_level(CollectionId id, const char *name) {
     Level maxLevel = 0;
 
     for (auto& edge : edges) {
-        maxLevel = std::max(maxLevel, edge.second);
+        maxLevel = max(maxLevel, edge.second);
     }
 
     return maxLevel;

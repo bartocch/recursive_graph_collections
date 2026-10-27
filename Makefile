@@ -1,5 +1,5 @@
-CFLAGS = -Wall -Wextra -O2 -std=c23 -g
-CXXFLAGS = -Wall -Wextra -O2 -std=c++23 -g
+CFLAGS = -Wall -Wextra -O2 -std=c23
+CXXFLAGS = -Wall -Wextra -O2 -std=c++23
 
 .PHONY: all, clean
 
