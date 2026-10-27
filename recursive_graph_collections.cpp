@@ -68,7 +68,7 @@ bool verifyGraphNameChar(char ch) {
         || ch == '_';                   // underscore
 }
 
-bool verifyGraphName(const string& name) {
+bool verifyGraphName(const GraphName& name) {
     if (name.empty()) {
         return false;   // Graph names cannot be empty.
     }
