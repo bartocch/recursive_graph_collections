@@ -3,6 +3,7 @@
 #include "lib/doctest.h"
 #include "recursive_graph_collections.h"
 #include <climits>
+#include <cstring>
 
 using cxx::rgc_new_collection;
 using cxx::rgc_delete_collection;
@@ -12,6 +13,7 @@ using cxx::rgc_graph_new_node;
 using cxx::rgc_graph_delete_node;
 using cxx::rgc_graph_add_edge;
 using cxx::rgc_graph_delete_edge;
+using cxx::rgc_next_graph;
 
 TEST_CASE("rgc_new_collection") {
     SUBCASE("returns correct ids upon successful creation") {
@@ -254,6 +256,27 @@ TEST_CASE("rgc_graph_delete_edge") {
         CHECK(rgc_new_graph(collectionId, "G1", 10));
         CHECK_FALSE(rgc_graph_delete_edge(collectionId, "G1", 2, 8));
         CHECK_FALSE(rgc_graph_delete_edge(collectionId, "G1", 4, 5));
+    }
+}
+
+TEST_CASE("rgc_next_graph") {
+    SUBCASE("returns name of next graph even if there is no graph with the provided name") {
+        long collectionId = rgc_new_collection();
+        REQUIRE(rgc_new_graph(collectionId, "A", 10));
+        REQUIRE(rgc_new_graph(collectionId, "B", 10));
+        REQUIRE(rgc_new_graph(collectionId, "C", 10));
+        REQUIRE(rgc_new_graph(collectionId, "D", 10));
+        rgc_delete_graph(collectionId, "B");
+
+        CHECK(strcmp(rgc_next_graph(collectionId, "B"), "C") == 0);
+    }
+
+    SUBCASE("returns nullptr if there is no next graph") {
+        long collectionId = rgc_new_collection();
+        REQUIRE(rgc_new_graph(collectionId, "A", 10));
+        REQUIRE(rgc_new_graph(collectionId, "B", 10));
+
+        CHECK(rgc_next_graph(collectionId, "B") == nullptr);
     }
 }
 
