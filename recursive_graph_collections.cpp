@@ -47,7 +47,7 @@ namespace cxx {
 // Namespace for helper functions and global variables.
 namespace {
 
-constinit long lastCollectionId = -1;
+constinit CollectionId lastCollectionId = -1;
 
 CollectionMap& collectionMap() {
     // Prevents the static initialization order fiasco.
