@@ -47,7 +47,7 @@ namespace cxx {
 // Namespace for helper functions and global variables.
 namespace {
 
-constinit long lastCollectionId = -1;
+constinit CollectionId lastCollectionId = -1;
 
 CollectionMap& collectionMap() {
     // Prevents the static initialization order fiasco.
@@ -294,14 +294,9 @@ const char *rgc_next_graph(CollectionId id, const char *name) {
         return nullptr;
     }
 
-    Collection::iterator it = collection->get().find(name);
+    Collection::iterator it = collection->get().upper_bound(name);
     if (it == collection->get().end()) {
-        return nullptr; // The graph with this name doesn't exist.
-    }
-
-    ++it;
-    if (it == collection->get().end()) {
-        return nullptr; // The graph with this name was the last one.
+        return nullptr;
     }
 
     return it->first.c_str();
